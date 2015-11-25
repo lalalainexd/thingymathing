@@ -1,0 +1,57 @@
+%h1 Todo List
+
+= form_for(@todo, remote: true, html: {:'data-type' => 'json'}) do |f|
+  = f.label :task, "Task..."
+  %span.error
+  = f.text_field :task
+  = f.submit 'Add'
+
+%ul.todos
+
+
+%script{id: 'todoItem', type: 'text/x-handlebard-template'}
+  %li
+    {{todo.task}}
+    %input{type: :hidden, value: '{{todo.id}}'}
+    %button.done Done
+
+:javascript
+  var template = Handlebars.compile($('#todoItem').html())
+  var renderTodoItem = function renderTodoItem(parentTag, todo) {
+    $(parentTag).append(template({todo: todo}))
+  }
+
+  var fetchTodos = function fetchTodos() {
+    $.getJSON('/todos')
+    .success(function(todos) {
+      var list = $('.todos')
+      $.each(todos, function(index, todo) {
+        renderTodoItem(list, todo)
+      })
+    })
+  }
+
+  var clearForm = function clearForm() {
+    $('.error').html('');
+    $('#todo_task').val('');
+  }
+
+  $('#new_todo')
+  .on('ajax:success', function(event, data, status, xhr) {
+    clearForm();
+    $('ul').html('');
+    fetchTodos();
+  })
+  .on('ajax:error', function(event, xhr, status, error) {
+    $('.error').html(xhr.responseJSON)
+  })
+
+  fetchTodos();
+
+  $('.todos').delegate('.done', 'click', function(event) {
+  console.log('clicked!')
+    var clickedButton = $(event.target)
+    var todoId = $(clickedButton.siblings('input')[0]).val()
+  })
+
+
